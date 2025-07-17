@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Party Icons X Bee Network Exclusive Gift</title>
+    <script src="https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@3/dist/fp.min.js"></script>
+    <style>
+        body { font-family: system-ui, sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .container { background-color: #fff; padding: 40px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); text-align: center; max-width: 480px; width: 90%; }
+        h1 { font-size: 24px; margin-bottom: 10px; }
+        p { color: #606770; margin-bottom: 30px; }
+        .claim-button { background-color: #f7931a; color: white; border: none; padding: 15px 30px; font-size: 18px; font-weight: bold; border-radius: 8px; cursor: pointer; transition: background-color 0.3s; }
+        .claim-button:disabled { background-color: #ccc; cursor: not-allowed; }
+        .result-box { margin-top: 30px; padding: 20px; border-radius: 8px; font-weight: bold; word-break: break-all; display: none; }
+        .result-success { background-color: #e7f3ff; color: #1877f2; }
+        .result-error { background-color: #ffebe8; color: #d93025; }
+        .progress { margin-top: 25px; color: #606770; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Party Icons X Bee Network Exclusive Gift</h1>
+        <p>One gift pack per person. Click the button below to claim your exclusive CDK!</p>
+        
+        <button id="claimButton" class="claim-button">Claim Now</button>
+
+        <div id="resultBox" class="result-box"></div>
+
+        <div class="progress">
+            <p>Distribution Progress: <span id="claimedCount">?</span> / <span id="totalCount">?</span></p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const claimButton = document.getElementById('claimButton');
+            const resultBox = document.getElementById('resultBox');
+            const claimedCountSpan = document.getElementById('claimedCount');
+            const totalCountSpan = document.getElementById('totalCount');
+
+            // 客户端检查：如果浏览器已经领过，直接禁用按钮
+            if (localStorage.getItem('beeGiftClaimed') === 'true') {
+                claimButton.disabled = true;
+                claimButton.textContent = 'Already Claimed';
+            }
+            
+            // 初始化 FingerprintJS
+            const fpPromise = FingerprintJS.load();
+            
+            // 更新状态的函数
+            async function updateStatus() {
+                try {
+                    const response = await fetch('/status');
+                    const data = await response.json();
+                    claimedCountSpan.textContent = data.claimed;
+                    totalCountSpan.textContent = data.total;
+                } catch (error) {
+                    console.error('无法更新状态:', error);
+                }
+            }
+
+            // 监听按钮点击事件
+            claimButton.addEventListener('click', async () => {
+                claimButton.disabled = true;
+                claimButton.textContent = 'Processing...';
+                
+                try {
+                    const fp = await fpPromise;
+                    const result = await fp.get();
+                    const visitorId = result.visitorId;
+
+                    const response = await fetch('/claim', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ fingerprint: visitorId })
+                    });
+                    
+                    const data = await response.json();
+                    resultBox.style.display = 'block';
+
+                    if (response.ok) {
+                        resultBox.className = 'result-box result-success';
+                        resultBox.innerHTML = `Success! Your CDK is:<br>${data.cdk}`;
+                        localStorage.setItem('beeGiftClaimed', 'true'); // 在浏览器中设置已领取的标记
+                    } else {
+                        resultBox.className = 'result-box result-error';
+                        resultBox.textContent = data.error;
+                    }
+                } catch (error) {
+                    resultBox.style.display = 'block';
+                    resultBox.className = 'result-box result-error';
+                    resultBox.textContent = 'An unexpected error occurred.';
+                } finally {
+                    updateStatus(); // 无论成功失败都更新一次状态
+                    claimButton.textContent = 'Already Claimed'; // 点击后永久禁用按钮
+                }
+            });
+
+            // 页面加载时，立即更新一次状态
+            updateStatus();
+        });
+    </script>
+</body>
+</html>
