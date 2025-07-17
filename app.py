@@ -2,7 +2,8 @@ import sqlite3
 from flask import Flask, jsonify, request, render_template
 
 app = Flask(__name__)
-DATABASE = 'cdk_database.db'
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+DATABASE = os.path.join(BASE_DIR, 'cdk_database.db')
 
 def get_db():
     db = sqlite3.connect(DATABASE)

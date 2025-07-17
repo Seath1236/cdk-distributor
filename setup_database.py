@@ -1,7 +1,9 @@
+import os
 import sqlite3
 
 # 连接或创建数据库文件
-conn = sqlite3.connect('cdk_database.db')
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+conn = sqlite3.connect(os.path.join(BASE_DIR, 'cdk_database.db'))
 cursor = conn.cursor()
 
 # 1. 创建CDK码表
